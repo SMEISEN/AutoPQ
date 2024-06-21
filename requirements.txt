@@ -1,0 +1,19 @@
+git+https://github.com/SMEISEN/pyWATTS.git@453133590beb64866ec7576fa58bebaf38a84ed5#egg=pywatts
+git+https://github.com/SMEISEN/propulate.git@main#egg=propulate
+git+https://github.com/SMEISEN/msvr@master#egg=msvr
+git+https://github.com/SMEISEN/sktime@main#egg=sktime
+pytorch-forecasting==0.10.3
+pytorch-lightning==1.9.0
+properscoring==0.1
+FrEIA==0.2
+gluonts==0.12.2
+tensorflow>=2
+numpy<1.24
+xgboost==1.7.3
+scikit-learn==1.1.3
+hyperopt==0.2.7
+pmdarima==2.0.3
+tbats==1.1.3
+pvlib==0.9.3
+--extra-index-url https://download.pytorch.org/whl/cu116
+torch==1.13.1+cu116
