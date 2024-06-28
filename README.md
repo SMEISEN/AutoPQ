@@ -51,6 +51,12 @@ The cINN is based on:
 Generating probabilistic forecasts by sampling in the cINN's latent space is based on:
 > K. Phipps, B. Heidrich, M. Turowski, M. Wittig, R. Mikut, and V. Hagenmeyer, “Generating probabilistic forecasts from arbitrary point forecasts using a conditional invertible neural network”, Applied Intelligence, 2024.
 
+Optimization of the sampling hyperparameter is performed using [Hyperopt](https://github.com/hyperopt/hyperopt)
+> J. Bergstra, D. Yamins, and D. Cox, “Making a science of model search: Hyperparameter optimization in hundreds of dimensions for vision architectures”, in Proceedings of the 30th International Conference on Machine Learning, ser. ICML ’13, Proceedings of Machine Learning Research, PMLR, 2013, pp. 115–123.
+
+Optimization of the point forecasting method's hyperparameters is performed using [Propulate](https://github.com/Helmholtz-AI-Energy/propulate)
+> O. Taubert, M. Weiel, D. Coquelin, A. Farshian, C. Debus, A. Schug, A. Streit, and M. Götz, “Massively parallel genetic optimization through asynchronous propagation of populations”, in High Performance Computing, A. Bhatele, J. Hammond, M. Baboulin, and C. Kruse, Eds., Cham, Switzerland: Springer Nature, 2023, pp. 106–124.
+
 The Load-BW data is taken from the Open Power System Data (OPSD) portal:
 > F. Wiese et al., “Open Power System Data: Frictionless data for electricity system modelling”, Applied Energy, vol. 236, pp. 401–409, 2019.
 
