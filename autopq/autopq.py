@@ -1,4 +1,5 @@
 import os
+import time
 import numpy as np
 import pandas as pd
 from mpi4py import MPI
@@ -12,7 +13,7 @@ from pywatts.core.summary_formatter import SummaryJSON
 from autopq.config import PointForecaster, ComputingResources, ConfigSpace, HyperoptAlgo, ValMetric
 from autopq.hpo.hyperopt import hyperopt_search
 from autopq.hpo.propulate import propulate_search
-from autopq.hpo.utils import map_forecaster_p_params
+from autopq.hpo.utils import map_forecaster_p_params, evaluate_trial
 from autopq.sub_pipelines.forecaster_p import add_forecaster_p
 from autopq.sub_pipelines.forecaster_q import add_forecaster_q
 from autopq.sub_pipelines.preprocessing import add_preprocessing
@@ -141,6 +142,7 @@ class AutoPQ:
         self._train = None
         self._val = None
         self._test = None
+        self._identification_times = []
 
         # Initialize attributes
         self.val_score_ = None
@@ -186,8 +188,10 @@ class AutoPQ:
                                        forecaster_q_params=self.forecaster_q_params)
 
         # Create pipeline
+        start = time.time()
         pipeline = self._create_pipeline(modules=self._modules)
         pipeline.train(data=self._train, summary=False, summary_formatter=None)
+        training_time = time.time() - start
 
         if self.computing_resources == ComputingResources.Default or (
                 self.computing_resources == ComputingResources.Advanced and
@@ -205,12 +209,24 @@ class AutoPQ:
             a = configuration.population_statistics["sampling_std__mu"]
             b = configuration.population_statistics["sampling_std__sigma"]
 
-        # Hyperparameter optimization of the sampling hyperparameter
-        search_kwargs = {"estimator": pipeline, "data": self._val, "val_metric": self.val_metric,
-                         "algo": self.hp_algo, "max_evals": self.hp_max_evals, "early_stopping": "plateau",
-                         "distribution": distribution, "log": log, "a": a, "b": b,
-                         "checkpoint_path": self.hp_checkpoint_path}
-        val_score, sampling_std, _, _ = hyperopt_search(**search_kwargs)
+        # Skip inner loop if training time is shorter than identification time (Algorithm 3)
+        # i.e., sampling hyperparameter is optimized using Propulate
+        if len(self._identification_times) <= 5 and training_time < np.mean(self._identification_times[-5:-1]):
+            result = pipeline.test(data=self._val, summary=False, summary_formatter=None)
+            val_score = float(evaluate_trial(val_metric=self.val_metric,
+                                             y=result["target_scale"], y_hat=result["forecast_q_scale"]))
+            sampling_std = configuration.sampling_std
+
+        # Hyperparameter optimization of the sampling hyperparameter (Algorithm 1)
+        # i.e. sampling hyperparameter is optimized using Hyperopt
+        else:
+            start = time.time()
+            search_kwargs = {"estimator": pipeline, "data": self._val, "val_metric": self.val_metric,
+                             "algo": self.hp_algo, "max_evals": self.hp_max_evals, "early_stopping": "plateau",
+                             "distribution": distribution, "log": log, "a": a, "b": b,
+                             "checkpoint_path": self.hp_checkpoint_path}
+            val_score, sampling_std, _, _ = hyperopt_search(**search_kwargs)
+            self._identification_times.append(time.time() - start)
 
         configuration.sampling_std = sampling_std
         configuration.pipeline_modules = self._modules
